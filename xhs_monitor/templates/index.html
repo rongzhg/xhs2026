@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小红书内容监控系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-danger">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="bi bi-heart"></i> 小红书内容监控系统</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#dashboard">仪表盘</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#accounts">账号管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contents">内容管理</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- 仪表盘标签页 -->
+        <div id="dashboard" class="content-section">
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <h5 class="card-title">监控账号</h5>
+                            <p class="card-text display-4" id="stat-accounts">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <h5 class="card-title">总内容数</h5>
+                            <p class="card-text display-4" id="stat-contents">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <h5 class="card-title">已转换</h5>
+                            <p class="card-text display-4" id="stat-converted">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <h5 class="card-title">待转换</h5>
+                            <p class="card-text display-4" id="stat-pending">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5>内容类型分布</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="typeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5>转换状态分布</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 账号管理标签页 -->
+        <div id="accounts" class="content-section" style="display:none;">
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5>添加新账号</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="addAccountForm">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">账号昵称</label>
+                                        <input type="text" class="form-control" id="username" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">用户ID</label>
+                                        <input type="text" class="form-control" id="userId" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Cookie</label>
+                                    <textarea class="form-control" id="cookie" rows="3" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">a1值（可选）</label>
+                                    <input type="text" class="form-control" id="a1">
+                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-plus"></i> 添加账号
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5>账号列表</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-striped" id="accountsTable">
+                                <thead>
+                                    <tr>
+                                        <th>昵称</th>
+                                        <th>用户ID</th>
+                                        <th>创建时间</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="accountsTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 内容管理标签页 -->
+        <div id="contents" class="content-section" style="display:none;">
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5>爬取内容</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">选择账号</label>
+                                    <select class="form-select" id="fetchAccountSelect">
+                                        <option value="">-- 选择账号 --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">目标用户ID</label>
+                                    <input type="text" class="form-control" id="fetchUserId" placeholder="输入目标用户ID">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-warning" id="fetchContentBtn">
+                                <i class="bi bi-cloud-download"></i> 爬取内容
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5>内容筛选</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">选择用户</label>
+                                    <select class="form-select" id="filterUserSelect">
+                                        <option value="">-- 所有用户 --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">内容类型</label>
+                                    <select class="form-select" id="filterTypeSelect">
+                                        <option value="">-- 所有类型 --</option>
+                                        <option value="video">视频</option>
+                                        <option value="image">图片</option>
+                                        <option value="text">文字</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">转换状态</label>
+                                    <select class="form-select" id="filterStatusSelect">
+                                        <option value="">-- 所有状态 --</option>
+                                        <option value="completed">已转换</option>
+                                        <option value="pending">待转换</option>
+                                        <option value="failed">失败</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label>&nbsp;</label>
+                                    <button type="button" class="btn btn-primary form-control" id="filterBtn">
+                                        <i class="bi bi-funnel"></i> 筛选
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5>内容列表</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="contentsContainer" style="max-height: 800px; overflow-y: auto;">
+                                <!-- 内容将动态加载到这里 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 内容详情模态框 -->
+    <div class="modal fade" id="contentDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="contentTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="contentDetailBody"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="convertContentBtn">转换文本</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载动画 -->
+    <div id="loadingSpinner" class="spinner-container" style="display:none;">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">加载中...</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
